@@ -12,6 +12,8 @@ const { getAdminContact, publicUser, users } = require("./adminDirectory");
 require("dotenv").config();
 
 const app = express();
+mongoose.set("bufferCommands", false);
+
 const ROOT_DIR = path.join(__dirname, "..");
 const FRONTEND_DIR = path.join(ROOT_DIR, "frontend");
 const FRONTEND_DIST = fs.existsSync(path.join(ROOT_DIR, "dist"))
@@ -48,24 +50,49 @@ try {
 dns.setDefaultResultOrder("ipv4first");
 
 
+let dbConnectionPromise;
+
 const connectDB = async () => {
-  try {
     const url = process.env.MONGODB_URI;
     if (!url) {
         throw new Error("MONGODB_URI environment variable is missing");
     }
 
     if (mongoose.connection.readyState === 1) {
-        return;
+        return mongoose.connection;
     }
 
-    await mongoose.connect(url);
-    console.log("Database connected");
-  } catch (e) {
-    console.log(e.message);
-  }
+    if (!dbConnectionPromise) {
+        dbConnectionPromise = mongoose.connect(url, {
+            connectTimeoutMS: 8000,
+            serverSelectionTimeoutMS: 8000,
+            maxPoolSize: 5
+        }).then(() => {
+            console.log("Database connected");
+            return mongoose.connection;
+        }).catch((error) => {
+            dbConnectionPromise = null;
+            throw error;
+        });
+    }
+
+    return dbConnectionPromise;
 };
-    connectDB()        
+
+connectDB().catch((error) => {
+    console.error("Database connection failed:", error.message);
+});
+
+async function requireDatabase(req, res, next) {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        res.status(503).json({
+            message: `Database connection failed: ${error.message}`
+        });
+    }
+}
 
 /* ================= USERS ================= */
 
@@ -156,6 +183,8 @@ app.post("/api/login", (req, res) => {
 
     res.json({ user: publicUser(user), token });
 });
+
+app.use("/api", requireDatabase);
 
 /* ================= AUTH MIDDLEWARE ================= */
 
