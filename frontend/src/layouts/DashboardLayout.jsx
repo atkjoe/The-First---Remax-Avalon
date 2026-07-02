@@ -1,4 +1,4 @@
-import { BarChart3, Home, LogOut, Settings, User } from "lucide-react";
+import { BarChart3, CalendarDays, Home, LogOut, NotebookPen, Settings, User } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -49,6 +49,8 @@ export default function DashboardLayout() {
 function DashboardNav({ compact = false }) {
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: BarChart3, end: true },
+    { to: "/dashboard/appointments", label: "Appointments", icon: CalendarDays },
+    { to: "/dashboard/client-notes", label: "Client notes", icon: NotebookPen },
     { to: "/dashboard/profile", label: "Profile", icon: User },
     { to: "/dashboard/settings", label: "Settings", icon: Settings },
     { to: "/", label: "Public site", icon: Home }

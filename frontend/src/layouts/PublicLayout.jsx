@@ -1,4 +1,4 @@
-import { Menu, User, X } from "lucide-react";
+import { Clock, Mail, MapPin, Menu, MessageCircle, Phone, User, X } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import Button from "../components/ui/Button.jsx";
@@ -9,6 +9,12 @@ const navItems = [
   { to: "/properties", label: "Properties" },
   { to: "/sell", label: "Sell" },
   { to: "/requests", label: "Buyer Request" }
+];
+
+const advisorContacts = [
+  { name: "Youssef", phone: "01020801467", whatsapp: "https://wtsi.me/201020801467" },
+  { name: "Mostafa", phone: "+20 108 0069523", whatsapp: "https://wh.ms/201080069523" },
+  { name: "Rahma", phone: "01031320203", whatsapp: "https://wa.me/201031320203" }
 ];
 
 export default function PublicLayout() {
@@ -64,13 +70,41 @@ export default function PublicLayout() {
           </main>
      
 
-      <footer className="bg-brand-ink px-4 py-8 text-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <footer className="bg-brand-ink px-4 py-12 text-white">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.1fr_1.3fr_0.8fr]">
           <div>
-            <p className="text-lg font-bold">The First</p>
-            <p className="text-sm text-slate-300">Remax Avalon</p>
+            <p className="text-xl font-extrabold text-white">The First</p>
+            <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-brand-red">Remax Avalon</p>
+            <p className="mt-4 max-w-sm text-sm leading-6 text-slate-300">Real estate guidance for buyers and sellers, with every listing connected to the Avalon advisor who posted it.</p>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200">
+              <Clock className="h-4 w-4 text-brand-red" />
+              Viewings by appointment
+            </div>
           </div>
-          <p className="text-sm text-slate-300">© 2026 All rights reserved.</p>
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-200">Advisor contacts</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {advisorContacts.map((advisor) => (
+                <div key={advisor.name} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                  <p className="font-bold text-white">{advisor.name}</p>
+                  <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-300">
+                    <a className="inline-flex items-center gap-2 hover:text-white" href={`tel:${advisor.phone.replace(/\s/g, "")}`}>
+                      <Phone className="h-4 w-4 text-brand-red" /> {advisor.phone}
+                    </a>
+                    <a className="inline-flex items-center gap-2 hover:text-white" href={advisor.whatsapp}>
+                      <MessageCircle className="h-4 w-4 text-brand-red" /> WhatsApp
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-200">Office</h2>
+            <p className="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-300"><MapPin className="mt-0.5 h-4 w-4 flex-none text-brand-red" /> Remax Avalon team, Egypt</p>
+            <a className="mt-4 flex items-center gap-2 text-sm text-slate-300 hover:text-white" href="mailto:info@thefirst-remaxavalon.com"><Mail className="h-4 w-4 text-brand-red" /> info@thefirst-remaxavalon.com</a>
+            <p className="mt-6 text-sm text-slate-400">(c) 2026 The First - Remax Avalon. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>

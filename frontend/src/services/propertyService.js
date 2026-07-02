@@ -7,5 +7,6 @@ export const propertyService = {
       .post("/properties", payload, {
         headers: { "Content-Type": "multipart/form-data" }
       })
-      .then((res) => res.data)
+      .then((res) => res.data),
+  remove: (id) => api.delete(`/properties/${id}`).then((res) => res.data)
 };

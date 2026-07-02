@@ -1,4 +1,4 @@
-import { Bath, BedDouble, Phone, Ruler } from "lucide-react";
+import { Bath, BedDouble, MessageCircle, NotebookText, Phone, Ruler, UserRound } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import Button from "../components/ui/Button.jsx";
 import { EmptyState, ErrorState, SkeletonGrid } from "../components/ui/Status.jsx";
@@ -14,6 +14,7 @@ export default function PropertyDetail() {
   const { data, loading, error, run } = useAsync(propertyService.list, [], { initialData: [] });
   const properties = data || [];
   const property = properties.find((item) => item._id === id);
+  const phoneHref = property?.contactPhone ? `tel:${property.contactPhone.replace(/\s/g, "")}` : "";
 
   if (loading) return <main className="mx-auto max-w-7xl px-4 py-10"><SkeletonGrid count={1} /></main>;
   if (error) return <main className="mx-auto max-w-7xl px-4 py-10"><ErrorState message={error} onRetry={run} /></main>;
@@ -32,10 +33,21 @@ export default function PropertyDetail() {
             <span className="rounded-lg bg-slate-50 p-3"><Bath className="mb-2 h-5 w-5 text-brand-blue" />{number(property.baths)} baths</span>
             <span className="rounded-lg bg-slate-50 p-3"><Ruler className="mb-2 h-5 w-5 text-brand-blue" />{number(property.area)} sqm</span>
           </div>
-          <p className="mt-6 leading-7 text-slate-600">Contact The First - Remax Avalon team for availability, viewing times, and negotiation details for this listing.</p>
+          <div className="mt-6 grid gap-3 text-sm text-slate-600">
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+              <div className="flex items-center gap-2 font-bold text-brand-ink"><UserRound className="h-4 w-4 text-brand-blue" /> Listed by</div>
+              <p className="mt-1">{property.listedBy || "The First team"}</p>
+            </div>
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+              <div className="flex items-center gap-2 font-bold text-brand-ink"><NotebookText className="h-4 w-4 text-brand-blue" /> Apartment notes</div>
+              <p className="mt-1 leading-6">{property.notes || "Contact the listing admin for viewing times, availability, and negotiation details."}</p>
+            </div>
+          </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <Button onClick={() => window.location.href = "tel:+201000000001"}><Phone className="h-4 w-4" /> Call</Button>
-            <a href="https://wa.me/201000000001" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-brand-ink hover:bg-slate-50">WhatsApp</a>
+            <Button disabled={!phoneHref} onClick={() => { if (phoneHref) window.location.href = phoneHref; }}><Phone className="h-4 w-4" /> {property.contactPhone || "Call"}</Button>
+            <a href={property.contactWhatsapp || "#"} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-brand-ink hover:bg-slate-50">
+              <MessageCircle className="h-4 w-4" /> WhatsApp
+            </a>
           </div>
         </section>
       </div>

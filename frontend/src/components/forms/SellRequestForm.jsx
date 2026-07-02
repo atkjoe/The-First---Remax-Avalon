@@ -54,7 +54,6 @@ export default function SellRequestForm({ onCreated }) {
         <option>Apartment</option>
         <option>Villa</option>
         <option>Studio</option>
-        <option>Townhouse</option>
       </Select>
       <Input label="Area" type="number" min="0" value={form.area} onChange={(event) => update("area", event.target.value)} />
       <Input label="Bedrooms" type="number" min="0" value={form.bedrooms} onChange={(event) => update("bedrooms", event.target.value)} />

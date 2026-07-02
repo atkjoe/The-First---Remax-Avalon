@@ -7,6 +7,7 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
+const { getAdminContact, publicUser, users } = require("./adminDirectory");
 
 const app = express();
 const ROOT_DIR = path.join(__dirname, "..");
@@ -56,12 +57,6 @@ const connectDB = async () => {
 
 /* ================= USERS ================= */
 
-const users = [
-    { name: "Mostafa", idCode: "#1", role: "admin" },
-    { name: "Rahma", idCode: "#2", role: "admin" },
-    { name: "Youssef", idCode: "#221204#", role: "superadmin" }
-];
-
 /* ================= JWT ================= */
 
 const SECRET = "REMAX_SECRET";
@@ -75,12 +70,21 @@ const Property = mongoose.model("Property", new mongoose.Schema({
     beds: Number,
     baths: Number,
     area: Number,
-    image: String
+    image: String,
+    notes: String,
+    listedBy: String,
+    listedByRole: String,
+    contactPhone: String,
+    contactWhatsapp: String,
+    createdAt: { type: Date, default: Date.now }
 }));
 
 const Request = mongoose.model("Request", new mongoose.Schema({
-    location: String,
-    budget: Number,
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
+    requesterType: { type: String, enum: ["Broker", "Client"], required: true },
+    location: { type: String, required: true },
+    budget: { type: Number, required: true },
     type: String,
     bedrooms: Number,
     notes: String,
@@ -98,6 +102,26 @@ const SellRequest = mongoose.model("SellRequest", new mongoose.Schema({
     price: Number,
     status: { type: String, default: "new" },
     createdAt: { type: Date, default: Date.now }
+}));
+
+const Appointment = mongoose.model("Appointment", new mongoose.Schema({
+    owner: { type: String, required: true, index: true },
+    clientName: String,
+    clientPhone: String,
+    propertyTitle: String,
+    scheduledAt: { type: Date, required: true },
+    reminderMinutesBefore: { type: Number, default: 30 },
+    notes: String,
+    createdAt: { type: Date, default: Date.now }
+}));
+
+const ClientNote = mongoose.model("ClientNote", new mongoose.Schema({
+    owner: { type: String, required: true, index: true },
+    clientName: String,
+    clientPhone: String,
+    notes: String,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 }));
 
 /* ================= AUTH ================= */
@@ -118,7 +142,7 @@ app.post("/api/login", (req, res) => {
         { expiresIn: "1d" }
     );
 
-    res.json({ user, token });
+    res.json({ user: publicUser(user), token });
 });
 
 /* ================= AUTH MIDDLEWARE ================= */
@@ -177,7 +201,17 @@ const upload = multer({ storage });
 app.get("/api/properties", async (req, res) => {
     try {
         const data = await Property.find();
-        res.json(data);
+        res.json(data.map((property) => {
+            const item = property.toObject();
+            const contact = getAdminContact(item.listedBy);
+            return {
+                ...item,
+                listedBy: item.listedBy || contact.name,
+                listedByRole: item.listedByRole || contact.role,
+                contactPhone: item.contactPhone || contact.phone,
+                contactWhatsapp: item.contactWhatsapp || contact.whatsapp
+            };
+        }));
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -185,8 +219,13 @@ app.get("/api/properties", async (req, res) => {
 
 app.post("/api/properties", auth, adminOnly, upload.single("image"), async (req, res) => {
     try {
+        const contact = getAdminContact(req.user.name);
         const property = new Property({
             ...req.body,
+            listedBy: contact.name,
+            listedByRole: contact.role,
+            contactPhone: contact.phone,
+            contactWhatsapp: contact.whatsapp,
             image: req.file ? "/uploads/" + req.file.filename : ""
         });
 
@@ -197,6 +236,12 @@ app.post("/api/properties", auth, adminOnly, upload.single("image"), async (req,
     }
 });
 
+app.delete("/api/properties/:id", auth, superAdminOnly, async (req, res) => {
+    const property = await Property.findByIdAndDelete(req.params.id);
+    if (!property) return res.status(404).json({ message: "Property not found" });
+    res.json({ ok: true });
+});
+
 /* ================= REQUESTS ================= */
 
 app.get("/api/requests", auth, adminOnly, async (req, res) => {
@@ -205,9 +250,23 @@ app.get("/api/requests", auth, adminOnly, async (req, res) => {
 });
 
 app.post("/api/requests", async (req, res) => {
-    const r = new Request(req.body);
-    await r.save();
-    res.json(r);
+    try {
+        const { name, phone, requesterType, location, budget } = req.body;
+        if (!name || !phone || !requesterType || !location || !budget) {
+            return res.status(400).json({ message: "Name, phone, requester type, location, and budget are required" });
+        }
+        const r = new Request(req.body);
+        await r.save();
+        res.json(r);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+app.delete("/api/requests/:id", auth, superAdminOnly, async (req, res) => {
+    const request = await Request.findByIdAndDelete(req.params.id);
+    if (!request) return res.status(404).json({ message: "Buyer request not found" });
+    res.json({ ok: true });
 });
 
 /* ================= SELL REQUESTS ================= */
@@ -223,6 +282,12 @@ app.post("/api/sell-requests", async (req, res) => {
     res.json(s);
 });
 
+app.delete("/api/sell-requests/:id", auth, superAdminOnly, async (req, res) => {
+    const sellRequest = await SellRequest.findByIdAndDelete(req.params.id);
+    if (!sellRequest) return res.status(404).json({ message: "Sell request not found" });
+    res.json({ ok: true });
+});
+
 /* ================= DASHBOARD ================= */
 
 app.get("/api/dashboard", auth, adminOnly, async (req, res) => {
@@ -230,8 +295,76 @@ app.get("/api/dashboard", auth, adminOnly, async (req, res) => {
     const properties = await Property.countDocuments();
     const requests = await Request.countDocuments();
     const sell = await SellRequest.countDocuments();
+    const appointments = await Appointment.countDocuments({ owner: req.user.name });
+    const clientNotes = await ClientNote.countDocuments({ owner: req.user.name });
 
-    res.json({ properties, requests, sell });
+    res.json({ properties, requests, sell, appointments, clientNotes });
+});
+
+/* ================= APPOINTMENTS ================= */
+
+app.get("/api/appointments", auth, adminOnly, async (req, res) => {
+    const data = await Appointment.find({ owner: req.user.name }).sort({ scheduledAt: 1 });
+    res.json(data);
+});
+
+app.post("/api/appointments", auth, adminOnly, async (req, res) => {
+    const appointment = new Appointment({
+        ...req.body,
+        owner: req.user.name
+    });
+    await appointment.save();
+    res.json(appointment);
+});
+
+app.put("/api/appointments/:id", auth, adminOnly, async (req, res) => {
+    const { owner, ...updates } = req.body;
+    const appointment = await Appointment.findOneAndUpdate(
+        { _id: req.params.id, owner: req.user.name },
+        updates,
+        { new: true }
+    );
+    if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+    res.json(appointment);
+});
+
+app.delete("/api/appointments/:id", auth, adminOnly, async (req, res) => {
+    const appointment = await Appointment.findOneAndDelete({ _id: req.params.id, owner: req.user.name });
+    if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+    res.json({ ok: true });
+});
+
+/* ================= CLIENT NOTES ================= */
+
+app.get("/api/client-notes", auth, adminOnly, async (req, res) => {
+    const data = await ClientNote.find({ owner: req.user.name }).sort({ updatedAt: -1 });
+    res.json(data);
+});
+
+app.post("/api/client-notes", auth, adminOnly, async (req, res) => {
+    const note = new ClientNote({
+        ...req.body,
+        owner: req.user.name
+    });
+    await note.save();
+    res.json(note);
+});
+
+app.put("/api/client-notes/:id", auth, adminOnly, async (req, res) => {
+    const { owner, ...updates } = req.body;
+    const note = await ClientNote.findOneAndUpdate(
+        { _id: req.params.id, owner: req.user.name },
+        { ...updates, updatedAt: new Date() },
+        { new: true }
+    );
+    if (!note) return res.status(404).json({ message: "Client note not found" });
+    res.json(note);
+});
+
+app.delete("/api/client-notes/:id", auth, adminOnly, async (req, res) => {
+    const note = await ClientNote.findOneAndDelete({ _id: req.params.id, owner: req.user.name });
+    if (!note) return res.status(404).json({ message: "Client note not found" });
+    res.json({ ok: true });
 });
 
 /* ================= REACT APP ================= */

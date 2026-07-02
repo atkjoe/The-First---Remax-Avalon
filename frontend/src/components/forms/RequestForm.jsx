@@ -5,7 +5,7 @@ import { requestService } from "../../services/requestService";
 import Button from "../ui/Button.jsx";
 import { Input, Select, Textarea } from "../ui/Input.jsx";
 
-const initial = { location: "", budget: "", type: "Apartment", bedrooms: "", notes: "" };
+const initial = { name: "", phone: "", requesterType: "Client", location: "", budget: "", type: "Apartment", bedrooms: "", notes: "" };
 
 export default function RequestForm({ onCreated }) {
   const [form, setForm] = useState(initial);
@@ -18,8 +18,8 @@ export default function RequestForm({ onCreated }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!form.location.trim() || !form.budget) {
-      showToast("Location and budget are required.", "error");
+    if (!form.name.trim() || !form.phone.trim() || !form.requesterType || !form.location.trim() || !form.budget) {
+      showToast("Name, phone, requester type, location, and budget are required.", "error");
       return;
     }
 
@@ -38,13 +38,18 @@ export default function RequestForm({ onCreated }) {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-      <Input label="Location required" value={form.location} onChange={(event) => update("location", event.target.value)} required />
+      <Input label="Name" value={form.name} onChange={(event) => update("name", event.target.value)} required />
+      <Input label="Phone number" type="tel" value={form.phone} onChange={(event) => update("phone", event.target.value)} required />
+      <Select label="Requester type" value={form.requesterType} onChange={(event) => update("requesterType", event.target.value)} required>
+        <option>Client</option>
+        <option>Broker</option>
+      </Select>
+      <Input label="Location" value={form.location} onChange={(event) => update("location", event.target.value)} required />
       <Input label="Budget" type="number" min="0" value={form.budget} onChange={(event) => update("budget", event.target.value)} required />
       <Select label="Property type" value={form.type} onChange={(event) => update("type", event.target.value)}>
         <option>Apartment</option>
         <option>Villa</option>
         <option>Studio</option>
-        <option>Townhouse</option>
       </Select>
       <Input label="Bedrooms" type="number" min="0" value={form.bedrooms} onChange={(event) => update("bedrooms", event.target.value)} />
       <Textarea label="Notes" className="min-h-28" value={form.notes} onChange={(event) => update("notes", event.target.value)} />

@@ -68,7 +68,6 @@ export default function Properties() {
             <option>Apartment</option>
             <option>Villa</option>
             <option>Studio</option>
-            <option>Townhouse</option>
           </Select>
           <Select label="Bedrooms" value={filters.beds} onChange={(event) => update("beds", event.target.value)}>
             <option value="">Any</option>

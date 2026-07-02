@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, Search, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, CalendarCheck, MessageCircle, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import PropertyCard from "../components/properties/PropertyCard.jsx";
 import Button from "../components/ui/Button.jsx";
@@ -22,9 +22,9 @@ export default function Home() {
     <main className="mb-20">
       <section className="hero-photo">
         <div className="mx-auto flex min-h-[78vh] max-w-7xl flex-col justify-center px-4 py-20 text-white sm:px-6 lg:px-8">
-          <p className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-white/80">The First · Remax Avalon</p>
+          <p className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-white/80">The First - Remax Avalon</p>
           <h1 className="max-w-3xl text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">Find, sell, and manage real estate with clarity.</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">A modern property experience for buyers, sellers, and the Avalon team.</p>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">Browse real listings, contact the advisor responsible for each home, or send your selling and buying request directly to the Avalon team.</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link to="/properties" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-brand-blue hover:bg-brand-sky">
               Browse properties <ArrowRight className="h-4 w-4" />
@@ -43,7 +43,6 @@ export default function Home() {
             <option>Apartment</option>
             <option>Villa</option>
             <option>Studio</option>
-            <option>Townhouse</option>
           </select>
           <select name="beds" className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm">
             <option value="">Any bedrooms</option>
@@ -77,9 +76,9 @@ export default function Home() {
       <section className="bg-white py-14">
         <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:grid-cols-3 sm:px-6 lg:px-8">
           {[
-            { icon: Building2, title: "Property listings", text: "Search live listings from the backend." },
-            { icon: ShieldCheck, title: "Team dashboard", text: "Protected admin workspace with role-aware access." },
-            { icon: Search, title: "Requests pipeline", text: "Capture buyer and seller leads in one place." }
+            { icon: Building2, title: "Clear listing details", text: "See price, space, rooms, listing notes, and the advisor responsible for the property." },
+            { icon: MessageCircle, title: "Direct advisor contact", text: "Call or WhatsApp the exact Avalon advisor who published the listing." },
+            { icon: CalendarCheck, title: "Simple next steps", text: "Send a buyer request, ask to sell, or arrange a viewing with the right team member." }
           ].map((item) => {
             const Icon = item.icon;
             return (

@@ -3,6 +3,8 @@ import ErrorBoundary from "./components/ui/ErrorBoundary.jsx";
 import ProtectedRoute from "./components/ui/ProtectedRoute.jsx";
 import PublicLayout from "./layouts/PublicLayout.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
+import Appointments from "./pages/Appointments.jsx";
+import ClientNotes from "./pages/ClientNotes.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
@@ -35,6 +37,8 @@ export default function App() {
           }
         >
           <Route index element={<Dashboard />} />
+          <Route path="appointments" element={<Appointments />} />
+          <Route path="client-notes" element={<ClientNotes />} />
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<Settings />} />
         </Route>
