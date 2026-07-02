@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { getAdminContact, listAdminContacts, matchesAdminName, publicUser, users } = require("./adminDirectory");
+const { getAdminContact, getAdminNameVariants, listAdminContacts, matchesAdminName, publicUser, users } = require("./adminDirectory");
 
 test("admin contacts are mapped to the correct listing owner", () => {
     assert.equal(getAdminContact("Youssef").phone, "01020801467");
@@ -38,6 +38,7 @@ test("login names accept old short names and new full names", () => {
     assert.equal(matchesAdminName(mostafa, "Mostafa"), true);
     assert.equal(matchesAdminName(mostafa, "Mostafa Elashry"), true);
     assert.equal(matchesAdminName(mostafa, "  mostafa   elashry  "), true);
+    assert.deepEqual(getAdminNameVariants("Mostafa"), ["Mostafa Elashry", "Mostafa"]);
 });
 
 test("unknown or old listings still have a visitor contact fallback", () => {

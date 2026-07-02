@@ -30,6 +30,11 @@ function matchesAdminName(user, name) {
     return [user.name, ...(user.aliases || [])].some((item) => normalizeName(item) === normalized);
 }
 
+function getAdminNameVariants(name) {
+    const user = users.find((item) => matchesAdminName(item, name));
+    return user ? [user.name, ...(user.aliases || [])] : [name].filter(Boolean);
+}
+
 function getAdminContact(name) {
     const user = users.find((item) => matchesAdminName(item, name));
     return publicUser(user) || defaultContact;
@@ -43,6 +48,7 @@ module.exports = {
     users,
     publicUser,
     matchesAdminName,
+    getAdminNameVariants,
     getAdminContact,
     listAdminContacts
 };

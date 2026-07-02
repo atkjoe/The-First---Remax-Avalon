@@ -7,7 +7,7 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
-const { getAdminContact, matchesAdminName, publicUser, users } = require("./adminDirectory");
+const { getAdminContact, getAdminNameVariants, matchesAdminName, publicUser, users } = require("./adminDirectory");
 
 require("dotenv").config();
 
@@ -247,7 +247,7 @@ app.get("/api/properties", async (req, res) => {
             const contact = getAdminContact(item.listedBy);
             return {
                 ...item,
-                listedBy: item.listedBy || contact.name,
+                listedBy: contact.name,
                 listedByRole: item.listedByRole || contact.role,
                 contactPhone: item.contactPhone || contact.phone,
                 contactWhatsapp: item.contactWhatsapp || contact.whatsapp
@@ -336,8 +336,9 @@ app.get("/api/dashboard", auth, adminOnly, async (req, res) => {
     const properties = await Property.countDocuments();
     const requests = await Request.countDocuments();
     const sell = await SellRequest.countDocuments();
-    const appointments = await Appointment.countDocuments({ owner: req.user.name });
-    const clientNotes = await ClientNote.countDocuments({ owner: req.user.name });
+    const ownerNames = getAdminNameVariants(req.user.name);
+    const appointments = await Appointment.countDocuments({ owner: { $in: ownerNames } });
+    const clientNotes = await ClientNote.countDocuments({ owner: { $in: ownerNames } });
 
     res.json({ properties, requests, sell, appointments, clientNotes });
 });
@@ -345,7 +346,7 @@ app.get("/api/dashboard", auth, adminOnly, async (req, res) => {
 /* ================= APPOINTMENTS ================= */
 
 app.get("/api/appointments", auth, adminOnly, async (req, res) => {
-    const data = await Appointment.find({ owner: req.user.name }).sort({ scheduledAt: 1 });
+    const data = await Appointment.find({ owner: { $in: getAdminNameVariants(req.user.name) } }).sort({ scheduledAt: 1 });
     res.json(data);
 });
 
@@ -361,7 +362,7 @@ app.post("/api/appointments", auth, adminOnly, async (req, res) => {
 app.put("/api/appointments/:id", auth, adminOnly, async (req, res) => {
     const { owner, ...updates } = req.body;
     const appointment = await Appointment.findOneAndUpdate(
-        { _id: req.params.id, owner: req.user.name },
+        { _id: req.params.id, owner: { $in: getAdminNameVariants(req.user.name) } },
         updates,
         { new: true }
     );
@@ -370,7 +371,7 @@ app.put("/api/appointments/:id", auth, adminOnly, async (req, res) => {
 });
 
 app.delete("/api/appointments/:id", auth, adminOnly, async (req, res) => {
-    const appointment = await Appointment.findOneAndDelete({ _id: req.params.id, owner: req.user.name });
+    const appointment = await Appointment.findOneAndDelete({ _id: req.params.id, owner: { $in: getAdminNameVariants(req.user.name) } });
     if (!appointment) return res.status(404).json({ message: "Appointment not found" });
     res.json({ ok: true });
 });
@@ -378,7 +379,7 @@ app.delete("/api/appointments/:id", auth, adminOnly, async (req, res) => {
 /* ================= CLIENT NOTES ================= */
 
 app.get("/api/client-notes", auth, adminOnly, async (req, res) => {
-    const data = await ClientNote.find({ owner: req.user.name }).sort({ updatedAt: -1 });
+    const data = await ClientNote.find({ owner: { $in: getAdminNameVariants(req.user.name) } }).sort({ updatedAt: -1 });
     res.json(data);
 });
 
@@ -394,7 +395,7 @@ app.post("/api/client-notes", auth, adminOnly, async (req, res) => {
 app.put("/api/client-notes/:id", auth, adminOnly, async (req, res) => {
     const { owner, ...updates } = req.body;
     const note = await ClientNote.findOneAndUpdate(
-        { _id: req.params.id, owner: req.user.name },
+        { _id: req.params.id, owner: { $in: getAdminNameVariants(req.user.name) } },
         { ...updates, updatedAt: new Date() },
         { new: true }
     );
@@ -403,7 +404,7 @@ app.put("/api/client-notes/:id", auth, adminOnly, async (req, res) => {
 });
 
 app.delete("/api/client-notes/:id", auth, adminOnly, async (req, res) => {
-    const note = await ClientNote.findOneAndDelete({ _id: req.params.id, owner: req.user.name });
+    const note = await ClientNote.findOneAndDelete({ _id: req.params.id, owner: { $in: getAdminNameVariants(req.user.name) } });
     if (!note) return res.status(404).json({ message: "Client note not found" });
     res.json({ ok: true });
 });
