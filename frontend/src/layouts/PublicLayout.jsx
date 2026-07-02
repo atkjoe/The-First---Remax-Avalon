@@ -22,7 +22,7 @@ export default function PublicLayout() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen bg-brand-mist text-brand-ink relative flex flex-col " >
+    <div className="relative flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-brand-mist text-brand-ink" >
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/" className="leading-tight" aria-label="The First Remax Avalon home">
@@ -70,8 +70,8 @@ export default function PublicLayout() {
           </main>
      
 
-      <footer className="bg-brand-ink px-4 py-10 text-white sm:py-12">
-        <div className="mx-auto grid max-w-7xl gap-8 sm:px-2 lg:grid-cols-[1.1fr_1.3fr_0.8fr]">
+      <footer className="w-full overflow-x-hidden bg-brand-ink px-4 py-10 text-white sm:py-12">
+        <div className="mx-auto grid w-full max-w-7xl min-w-0 gap-8 sm:px-2 lg:grid-cols-[1.1fr_1.3fr_0.8fr]">
           <div className="min-w-0">
             <p className="text-xl font-extrabold text-white">The First</p>
             <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-brand-red">Remax Avalon</p>

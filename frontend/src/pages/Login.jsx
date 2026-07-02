@@ -39,10 +39,10 @@ export default function Login() {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-145px)] items-center justify-center px-4 py-10">
-      <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
+    <main className="flex min-h-[calc(100vh-145px)] min-w-0 items-center justify-center px-4 py-10">
+      <section className="w-full max-w-md min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-soft sm:p-6">
         <p className="text-sm font-bold uppercase text-brand-red">Team login</p>
-        <h1 className="mt-2 text-3xl font-extrabold text-brand-ink">Access dashboard</h1>
+        <h1 className="mt-2 break-words text-2xl font-extrabold leading-tight text-brand-ink sm:text-3xl">Access dashboard</h1>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <Input label="Name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="username" required />
           <Input label="ID code" value={idCode} onChange={(event) => setIdCode(event.target.value)} autoComplete="current-password" required />

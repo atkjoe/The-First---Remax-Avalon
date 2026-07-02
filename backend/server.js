@@ -7,7 +7,7 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
-const { getAdminContact, publicUser, users } = require("./adminDirectory");
+const { getAdminContact, matchesAdminName, publicUser, users } = require("./adminDirectory");
 
 require("dotenv").config();
 
@@ -169,7 +169,7 @@ app.post("/api/login", (req, res) => {
 
     const { name, idCode } = req.body;
 
-    const user = users.find(u => u.name === name && u.idCode === idCode);
+    const user = users.find((u) => matchesAdminName(u, name) && u.idCode === idCode);
 
     if (!user) {
         return res.status(401).json({ message: "Invalid login" });
