@@ -14,7 +14,9 @@ require("dotenv").config();
 const app = express();
 const ROOT_DIR = path.join(__dirname, "..");
 const FRONTEND_DIR = path.join(ROOT_DIR, "frontend");
-const FRONTEND_DIST = path.join(FRONTEND_DIR, "dist");
+const FRONTEND_DIST = fs.existsSync(path.join(ROOT_DIR, "dist"))
+    ? path.join(ROOT_DIR, "dist")
+    : path.join(FRONTEND_DIR, "dist");
 const UPLOADS_DIR = path.join(FRONTEND_DIR, "uploads");
 
 /* ================= PORT ================= */
