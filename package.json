@@ -1,9 +1,8 @@
 
-
 {
-"name": "the-first---remax-avalon",
-"version": "1.0.0",
-"description": "React frontend and Express backend for The First - Remax Avalon",
+ "name": "the-first---remax-avalon",
+  "version": "1.0.0",
+  "description": "React frontend and Express",
 "license": "ISC",
 "author": "",
 "type": "commonjs",
