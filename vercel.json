@@ -1,32 +1,29 @@
 {
-  "services": {
-    "frontend": {
-      "root": ".",
-      "framework": "vite"
+  "builds": [
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node"
     },
-    "backend": {
-      "root": "backend",
-      "framework": "node"
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
-  },
-  "rewrites": [
+  ],
+  "routes": [
     {
-      "source": "/api(/.*)?",
-      "destination": {
-        "type": "service",
-        "service": "backend"
-      }
+      "src": "/api/(.*)",
+      "dest": "backend/server.js"
     },
     {
-      "source": "/uploads(/.*)?",
-      "destination": {
-        "type": "service",
-        "service": "backend"
-      }
+      "src": "/uploads/(.*)",
+      "dest": "backend/server.js"
     },
     {
-      "source": "/(.*)",
-      "destination": "/"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
