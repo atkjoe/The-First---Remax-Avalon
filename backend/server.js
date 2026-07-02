@@ -9,6 +9,8 @@ const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const { getAdminContact, publicUser, users } = require("./adminDirectory");
 
+require("dotenv").config();
+
 const app = express();
 const ROOT_DIR = path.join(__dirname, "..");
 const FRONTEND_DIR = path.join(ROOT_DIR, "frontend");
@@ -46,7 +48,15 @@ dns.setDefaultResultOrder("ipv4first");
 
 const connectDB = async () => {
   try {
-    const url = "mongodb+srv://admin:OEw85q84QYRPkEbH@cluster0.r9msugv.mongodb.net/the-first-remax?retryWrites=true&w=majority";
+    const url = process.env.MONGODB_URI;
+    if (!url) {
+        throw new Error("MONGODB_URI environment variable is missing");
+    }
+
+    if (mongoose.connection.readyState === 1) {
+        return;
+    }
+
     await mongoose.connect(url);
     console.log("Database connected");
   } catch (e) {
@@ -59,11 +69,11 @@ const connectDB = async () => {
 
 /* ================= JWT ================= */
 
-const SECRET = "REMAX_SECRET";
+const SECRET = process.env.JWT_SECRET || "REMAX_LOCAL_SECRET";
 
 /* ================= MODELS ================= */
 
-const Property = mongoose.model("Property", new mongoose.Schema({
+const Property = mongoose.models.Property || mongoose.model("Property", new mongoose.Schema({
     title: String,
     type: String,
     price: Number,
@@ -79,7 +89,7 @@ const Property = mongoose.model("Property", new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 }));
 
-const Request = mongoose.model("Request", new mongoose.Schema({
+const Request = mongoose.models.Request || mongoose.model("Request", new mongoose.Schema({
     name: { type: String, required: true },
     phone: { type: String, required: true },
     requesterType: { type: String, enum: ["Broker", "Client"], required: true },
@@ -91,7 +101,7 @@ const Request = mongoose.model("Request", new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 }));
 
-const SellRequest = mongoose.model("SellRequest", new mongoose.Schema({
+const SellRequest = mongoose.models.SellRequest || mongoose.model("SellRequest", new mongoose.Schema({
     name: String,
     phone: String,
     address: String,
@@ -104,7 +114,7 @@ const SellRequest = mongoose.model("SellRequest", new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 }));
 
-const Appointment = mongoose.model("Appointment", new mongoose.Schema({
+const Appointment = mongoose.models.Appointment || mongoose.model("Appointment", new mongoose.Schema({
     owner: { type: String, required: true, index: true },
     clientName: String,
     clientPhone: String,
@@ -115,7 +125,7 @@ const Appointment = mongoose.model("Appointment", new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 }));
 
-const ClientNote = mongoose.model("ClientNote", new mongoose.Schema({
+const ClientNote = mongoose.models.ClientNote || mongoose.model("ClientNote", new mongoose.Schema({
     owner: { type: String, required: true, index: true },
     clientName: String,
     clientPhone: String,
@@ -379,6 +389,10 @@ app.get("*", (req, res) => {
 
 /* ================= START ================= */
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
