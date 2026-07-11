@@ -116,6 +116,7 @@ const Property = mongoose.models.Property || mongoose.model("Property", new mong
     baths: Number,
     area: Number,
     image: String,
+    imagePublicId: String,
     notes: String,
     listedBy: String,
     listedByRole: String,
@@ -281,6 +282,49 @@ function uploadImageToCloudinary(file) {
     });
 }
 
+function getCloudinaryPublicId(property) {
+    if (property.imagePublicId) {
+        return property.imagePublicId;
+    }
+
+    if (!property.image || !property.image.includes("res.cloudinary.com")) {
+        return "";
+    }
+
+    try {
+        const imagePath = new URL(property.image).pathname;
+        const uploadIndex = imagePath.indexOf("/upload/");
+        if (uploadIndex === -1) {
+            return "";
+        }
+
+        const publicPath = imagePath
+            .slice(uploadIndex + "/upload/".length)
+            .replace(/^v\d+\//, "")
+            .replace(/\.[^/.]+$/, "");
+
+        return decodeURIComponent(publicPath);
+    } catch (error) {
+        return "";
+    }
+}
+
+async function deleteImageFromCloudinary(property) {
+    const publicId = getCloudinaryPublicId(property);
+    if (!publicId) {
+        return;
+    }
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        throw new Error("Cloudinary environment variables are missing");
+    }
+
+    const result = await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+    if (result.result !== "ok" && result.result !== "not found") {
+        throw new Error(`Cloudinary delete failed: ${result.result}`);
+    }
+}
+
 /* ================= PROPERTIES ================= */
 
 app.get("/api/properties", async (req, res) => {
@@ -312,7 +356,8 @@ app.post("/api/properties", auth, adminOnly, upload.single("image"), handleUploa
             listedByRole: contact.role,
             contactPhone: contact.phone,
             contactWhatsapp: contact.whatsapp,
-            image: imageUpload?.secure_url || ""
+            image: imageUpload?.secure_url || "",
+            imagePublicId: imageUpload?.public_id || ""
         });
 
         await property.save();
@@ -323,9 +368,17 @@ app.post("/api/properties", auth, adminOnly, upload.single("image"), handleUploa
 });
 
 app.delete("/api/properties/:id", auth, superAdminOnly, async (req, res) => {
-    const property = await Property.findByIdAndDelete(req.params.id);
-    if (!property) return res.status(404).json({ message: "Property not found" });
-    res.json({ ok: true });
+    try {
+        const property = await Property.findById(req.params.id);
+        if (!property) return res.status(404).json({ message: "Property not found" });
+
+        await deleteImageFromCloudinary(property);
+        await Property.findByIdAndDelete(req.params.id);
+
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 });
 
 /* ================= REQUESTS ================= */
