@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
-const { v4: uuidv4 } = require("uuid");
+const { v2: cloudinary } = require("cloudinary");
 const { getAdminContact, getAdminNameVariants, matchesAdminName, publicUser, users } = require("./adminDirectory");
 
 require("dotenv").config();
@@ -20,6 +20,12 @@ const FRONTEND_DIST = fs.existsSync(path.join(ROOT_DIR, "dist"))
     ? path.join(ROOT_DIR, "dist")
     : path.join(FRONTEND_DIR, "dist");
 const UPLOADS_DIR = path.join(FRONTEND_DIR, "uploads");
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 /* ================= PORT ================= */
 
@@ -226,16 +232,54 @@ function superAdminOnly(req, res, next) {
 
 /* ================= UPLOAD ================= */
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, UPLOADS_DIR);
-    },
-    filename: (req, file, cb) => {
-        cb(null, uuidv4() + "-" + file.originalname);
+const storage = multer.memoryStorage();
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith("image/")) {
+            return cb(new Error("Only image uploads are allowed"));
+        }
+        cb(null, true);
     }
 });
 
-const upload = multer({ storage });
+function handleUploadError(err, req, res, next) {
+    if (!err) {
+        return next();
+    }
+
+    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({ message: "Image must be 5MB or smaller" });
+    }
+
+    return res.status(400).json({ message: err.message || "Image upload failed" });
+}
+
+function uploadImageToCloudinary(file) {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        throw new Error("Cloudinary environment variables are missing");
+    }
+
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            {
+                folder: process.env.CLOUDINARY_FOLDER || "remax-avalon/properties",
+                resource_type: "image"
+            },
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(result);
+            }
+        );
+
+        stream.end(file.buffer);
+    });
+}
 
 /* ================= PROPERTIES ================= */
 
@@ -258,22 +302,23 @@ app.get("/api/properties", async (req, res) => {
     }
 });
 
-app.post("/api/properties", auth, adminOnly, upload.single("image"), async (req, res) => {
+app.post("/api/properties", auth, adminOnly, upload.single("image"), handleUploadError, async (req, res) => {
     try {
         const contact = getAdminContact(req.user.name);
+        const imageUpload = req.file ? await uploadImageToCloudinary(req.file) : null;
         const property = new Property({
             ...req.body,
             listedBy: contact.name,
             listedByRole: contact.role,
             contactPhone: contact.phone,
             contactWhatsapp: contact.whatsapp,
-            image: req.file ? "/uploads/" + req.file.filename : ""
+            image: imageUpload?.secure_url || ""
         });
 
         await property.save();
         res.json(property);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: err.message ,error:err });
     }
 });
 
